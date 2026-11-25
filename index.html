@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Risk Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, exact, like a well-run experiment; one question at a time.
+   IDEA: a coin flip on a pot of money, then a page of outcome ranges like a newspaper graphic.
+   PICTURE: the current choice itself, large; later the range chart of eleven portfolios.
+   COLOUR and TYPE: newspaper desk: pale pink ground, ink, teal for the safe side, claret for risk; Libre Franklin.
+   LAYOUT: one centred column, 720px, progress as plain text, results as a short table and one chart. */
+:root{color-scheme:light dark;--bg:light-dark(#ffe3dc,#1c1512);--card:light-dark(#fff6f2,#2a201c);--ink:light-dark(#1a1817,#f3e9e4);--mute:light-dark(#5e5450,#b9aca6);--teal:light-dark(#0d7680,#4fb3bc);--claret:light-dark(#990f3d,#e0577f);--line:light-dark(#e8c9c0,#4a3a34)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Libre Franklin",system-ui,sans-serif;overflow-x:clip}
+main{max-width:720px;margin:0 auto;padding:clamp(24px,5vw,56px) max(5vw,16px) 64px}
+h1{font-size:clamp(32px,6vw,46px);line-height:1.05;font-weight:800;margin:0 0 16px;text-wrap:balance}
+h2{font-size:24px;line-height:1.15;font-weight:800;margin:0 0 12px}
+p{margin:0 0 14px}.mute{color:var(--mute);font-size:15px}
+.step{color:var(--mute);font-size:14px;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:clamp(18px,4vw,28px);margin:18px 0}
+.flip{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:16px 0}
+.side{border-radius:8px;padding:16px;border:2px solid}
+.side b{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.side .big{font-size:clamp(22px,4.5vw,30px);font-weight:800;line-height:1.1;white-space:nowrap}
+.side .to{font-size:15px;color:var(--mute);white-space:nowrap}
+.up{border-color:var(--teal)}.up .big{color:var(--teal)}.dn{border-color:var(--claret)}.dn .big{color:var(--claret)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+button{font:600 16px "Libre Franklin",sans-serif;min-height:44px;padding:10px 18px;border-radius:8px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+button.pri{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+button[disabled]{opacity:.4;cursor:default}
+.opts{display:grid;gap:8px}.opts button{text-align:left;font-weight:400;border-width:1px;border-color:var(--line);background:var(--card)}
+.opts button.sel{border:2px solid var(--teal)}
+.scale{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px}.scale button{padding:10px 0;font-weight:600;border-width:1px}
+.scale button.sel{background:var(--teal);color:#fff;border-color:var(--teal)}
+.ends{display:flex;justify-content:space-between;font-size:14px;color:var(--mute);margin-top:6px}
+input[type=text],textarea{font:16px "Libre Franklin",sans-serif;width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+textarea{min-height:160px;font-size:14px}
+.rows{display:grid;gap:4px;margin:12px 0}
+.row{display:grid;grid-template-columns:4.2em minmax(0,1fr);align-items:center;gap:8px;padding:6px 4px;border-radius:6px;cursor:pointer;border:2px solid transparent;background:none;text-align:left;font-weight:400;min-height:44px}
+.row.sel{border-color:var(--teal);background:var(--card)}
+.row .lab{font-weight:600;font-size:15px;white-space:nowrap}
+.track{position:relative;height:22px}
+.rng{position:absolute;top:7px;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--claret),var(--teal))}
+.med{position:absolute;top:1px;width:3px;height:20px;background:var(--ink);border-radius:2px}
+.start{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1px dashed var(--mute)}
+.axis{position:relative;height:20px;margin-left:calc(4.2em + 12px);font-size:13px;color:var(--mute)}
+.axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.detail{font-size:15px;margin-top:8px;min-height:3em}
+table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+.result{font-size:clamp(40px,9vw,64px);font-weight:800;line-height:1;color:var(--teal)}
+code.rc{display:block;word-break:break-all;background:var(--card);border:1px dashed var(--line);padding:12px;border-radius:8px;font-size:13px}
+.bars{display:grid;gap:6px;margin:10px 0}.bar{display:grid;grid-template-columns:6em minmax(0,1fr) 2.5em;gap:8px;align-items:center;font-size:14px}
+.bar i{display:block;height:14px;background:var(--teal);border-radius:3px}
+.scroll{overflow-x:auto}
+.fig{position:relative;height:300px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.hide{display:none}
+@media(max-width:600px){.flip{grid-template-columns:1fr}.scale{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+{
+/* ===== SETTING: paste the web app URL of your Apps Script receiver between the quotes ===== */
+const ENDPOINT='https://script.google.com/macros/s/AKfycbyHLJxSeH_PixS4ub3VwCJIn0JY8IC2sgYSFQp-XnXpgSmYvJbYOcUuibQcQ-LRbDjR/exec';
+/* Group label from the link, e.g. .../risk-profile/?g=econ4510 */
+const GROUP=(()=>{try{return(new URLSearchParams(location.search).get('g')||'').replace(/[^\w-]/g,'').slice(0,40)}catch(e){return''}})();
+const W0=4e6, T=30, SIG=0.16, R=Math.log(1.0075), MU=Math.log(1.0375)+SIG*SIG/2, PREM=MU-R;
+const app=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nok=x=>'NOK '+Math.round(x).toLocaleString('en-US');
+const mill=x=>'NOK '+(x/1e6).toFixed(x<1e7?1:0)+'m';
+const pct=x=>(Math.round(x*1000)/10).toString().replace(/\.0$/,'')+'%';
+const f2=x=>isFinite(x)?x.toFixed(1):'–';
+
+/* CRRA: certainty equivalent (as a multiple of wealth) of a 50/50 flip between 1+g and 1-l */
+function ce(gm,g,l){const a=1+g,b=1-l;if(Math.abs(1-gm)<1e-7)return Math.exp((Math.log(a)+Math.log(b))/2);return Math.pow((Math.pow(a,1-gm)+Math.pow(b,1-gm))/2,1/(1-gm))}
+function gammaOf(g,l){let lo=0.01,hi=200;if(ce(lo,g,l)<1)return 0;if(ce(hi,g,l)>1)return Infinity;for(let i=0;i<80;i++){const m=Math.sqrt(lo*hi);ce(m,g,l)>1?lo=m:hi=m}return Math.sqrt(lo*hi)}
+function upsideFor(gm,l){if(Math.abs(1-gm)<1e-7)return 1/(1-l)-1;const t=2-Math.pow(1-l,1-gm);if(t<=0)return Infinity;return Math.pow(t,1/(1-gm))-1}
+function lossFor(gm,G){if(Math.abs(1-gm)<1e-7)return 1-1/(1+G);const s=2-Math.pow(1+G,1-gm);if(s<=0)return 1;return 1-Math.pow(s,1/(1-gm))}
+const N=x=>{const t=1/(1+0.2316419*Math.abs(x)),d=0.3989423*Math.exp(-x*x/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p};
+
+/* staircase over gamma: each step shows the flip that makes the midpoint gamma indifferent, rounded */
+function stair(kind,par,lo,hi){return{kind,par,lo,hi,lo0:lo,hi0:hi,n:0,max:4,cur:null}}
+function nextFlip(s){const m=Math.sqrt(s.lo*s.hi);let g,l,gd;
+  if(s.kind==='up'){l=s.par;const raw=upsideFor(m,l);const st=raw<0.2?0.005:raw<0.6?0.01:0.05;g=Math.round(raw/st)*st;gd=gammaOf(g,l);if(!(gd>s.lo&&gd<s.hi)){g=Math.round(raw*1000)/1000;gd=gammaOf(g,l)}}
+  else{g=s.par;const raw=lossFor(m,g);l=Math.min(0.95,Math.round(raw*100)/100);gd=gammaOf(g,l);if(!(gd>s.lo&&gd<s.hi)){l=Math.min(0.95,Math.round(raw*1000)/1000);gd=gammaOf(g,l)}}
+  s.cur={g,l,gd};return s.cur}
+function answer(s,accept){accept?s.hi=s.cur.gd:s.lo=s.cur.gd;s.n++}
+const est=s=>({lo:s.lo,hi:s.hi,pt:Math.sqrt(s.lo*s.hi),cl:s.lo===s.lo0,ch:s.hi===s.hi0});
+
+const SMALL=[41000,44000,50000,60000,80000,120000,200000];
+const IND=[
+ {q:'If the value of this portfolio fell by 25% within a single year, what would you most likely do?',o:['Sell everything to avoid further losses','Sell some of it','Do nothing and wait','Buy more while prices are low']},
+ {q:'Which statement best describes what you want from this money?',o:['Above all, keep its value intact','Some growth, but with limited ups and downs','A balance between growth and stability','As much growth as possible, accepting large swings']},
+ {q:'How would a close friend describe you as a risk taker?',o:['Someone who avoids risk','Cautious','Willing to take risks after careful thought','A real risk taker']},
+ {q:'When you think of the word "risk" in connection with money, what comes to mind first?',o:['Loss','Uncertainty','Opportunity','Excitement']}];
+
+const S={i:0,code:'',self:null,q:[stair('up',0.10,0.5,7.0),stair('up',0.20,0.5,3.8),stair('loss',4,0.5,12)],small:{lo:0,hi:SMALL.length,n:0},dom:null,y:null,ind:[null,null,null,null],exp:null,t0:0,sent:'idle'};
+const STEPS=['intro','self','q0','q1','q2','small','dom','db','ind','exp','res'];
+const go=d=>{S.i+=d;render();window.scrollTo(0,0)};
+const step=k=>`<div class="step">Part ${k} of 6</div>`;
+
+function render(){if(location.hash==='#instructor')return renderInstructor();const v=STEPS[S.i];
+ if(v==='intro')app.innerHTML=`<h1>How much risk would you take?</h1>
+  <p>This takes about ten minutes. There are no right or wrong answers; we want your honest preferences. At the end you get an estimate of your risk aversion and what it implies for how much of a long-term portfolio to hold in equities.</p>
+  <div class="card"><h2>Your situation</h2>
+  <p>Imagine that you have been given <b>NOK 4 million</b> to invest.</p>
+  <p>The money is set aside for the <b>long term</b>. You cannot touch it for at least 30 years. Think of it as long-term wealth, not as savings for a home, studies or anything else you may need in the coming years.</p>
+  <p>All amounts are in today's kroner, adjusted for inflation. Your income, home and other plans are unaffected by what happens to this money.</p></div>
+  <label for="cn"><b>Choose a name.</b> It can be your real name, or a code name if you prefer to stay anonymous.</label>
+  <input id="cn" type="text" maxlength="24" autocomplete="off" value="${esc(S.code)}" style="margin:8px 0 16px">
+  <div class="btns"><button class="pri" id="nx">Start</button></div>`;
+ if(v==='self')app.innerHTML=`${step(1)}<h2>Your own view first</h2><div class="card">
+  <p>How willing are you to take risks when investing this money?</p>
+  <div class="scale">${[...Array(11)].map((_,k)=>`<button data-v="${k}" class="${S.self===k?'sel':''}">${k}</button>`).join('')}</div>
+  <div class="ends"><span>0: not at all willing</span><span>10: very willing</span></div></div>
+  <div class="btns"><button id="bk">Back</button><button class="pri" id="nx" ${S.self===null?'disabled':''}>Next</button></div>`;
+ if(v[0]==='q'){const k=+v[1],s=S.q[k];
+  if(s.n>=s.max){go(1);return}
+  const f=s.cur&&s.cur.n===s.n?s.cur:Object.assign(nextFlip(s),{n:s.n});
+  const intro=['A fair coin will be flipped once. The outcome has nothing to do with the rest of your life or your other investments.','A new coin flip, now with a larger possible loss.','A new coin flip, now with a large possible gain.'][k];
+  app.innerHTML=`${step(2)}<h2>Coin flip ${k+1} of 3 <span class="mute">· question ${s.n+1} of ${s.max}</span></h2>
+  <p>${intro} Would you take this flip with your NOK 4 million?</p>
+  <div class="flip"><div class="side up"><b>Heads</b><div class="big">+${pct(f.g)}</div><div class="to">to ${nok(W0*(1+f.g))}</div></div>
+  <div class="side dn"><b>Tails</b><div class="big">−${pct(f.l)}</div><div class="to">to ${nok(W0*(1-f.l))}</div></div></div>
+  <div class="btns"><button class="pri" id="acc">Take the flip</button><button id="dec">Keep the NOK 4 million</button></div>
+  <p class="mute" style="margin-top:14px">The flips adjust to your answers, so expect some to be close calls.</p>`;
+  document.getElementById('acc').onclick=()=>{answer(s,true);render()};document.getElementById('dec').onclick=()=>{answer(s,false);render()};return}
+ if(v==='small'){const m=S.small;if(m.n>=3||m.lo>=m.hi){go(1);return}
+  const mid=Math.floor((m.lo+m.hi)/2);m.mid=mid;
+  app.innerHTML=`${step(3)}<h2>A small coin flip</h2><p>Same NOK 4 million, but now the stakes are small. Would you take this flip?</p>
+  <div class="flip"><div class="side up"><b>Heads</b><div class="big">+${nok(SMALL[mid]).replace('NOK ','')}</div><div class="to">kroner</div></div>
+  <div class="side dn"><b>Tails</b><div class="big">−40,000</div><div class="to">kroner</div></div></div>
+  <div class="btns"><button class="pri" id="acc">Take the flip</button><button id="dec">No thanks</button></div>`;
+  document.getElementById('acc').onclick=()=>{m.hi=mid;m.n++;render()};document.getElementById('dec').onclick=()=>{m.lo=mid+1;m.n++;render()};return}
+ if(v==='dom')app.innerHTML=`${step(3)}<h2>Which flip do you prefer?</h2><div class="card opts">
+  <button data-v="0" class="${S.dom===0?'sel':''}"><b>Flip A</b>: heads +30%, tails −10%</button>
+  <button data-v="1" class="${S.dom===1?'sel':''}"><b>Flip B</b>: heads +20%, tails −10%</button></div>
+  <div class="btns"><button class="pri" id="nx" ${S.dom===null?'disabled':''}>Next</button></div>`;
+ if(v==='db'){app.innerHTML=`${step(4)}<h2>Choose a portfolio</h2>
+  <p>Each row is a way to invest the NOK 4 million: a share in a global equity fund, the rest in safe inflation-protected bonds. The bar shows what the money may be worth <b>after 30 years</b>: the dark mark is the typical outcome, and the bar runs from a bad case (1 in 20 chance of doing worse) to a good case (1 in 20 chance of doing better). The dashed line is the NOK 4 million you start with.</p>
+  <div class="rows" id="rows"></div><div class="axis" id="ax"></div><div class="detail" id="det"><span class="mute">Click the portfolio you would choose.</span></div>
+  <div class="btns"><button id="bk">Back</button><button class="pri" id="nx" ${S.y===null?'disabled':''}>Next</button></div>
+  <p class="mute">Assumptions: safe bonds earn 0.75% a year after inflation; equities earn 3.75% a year on average (geometric) with 16% annual volatility. The portfolio is rebalanced to its equity share.</p>`;drawRows()}
+ if(v==='ind'){app.innerHTML=`${step(5)}<h2>A few more questions</h2>${IND.map((it,k)=>`<div class="card"><p>${it.q}</p><div class="opts">${it.o.map((o,j)=>`<button data-q="${k}" data-v="${j}" class="${S.ind[k]===j?'sel':''}">${o}</button>`).join('')}</div></div>`).join('')}
+  <div class="btns"><button class="pri" id="nx" ${S.ind.includes(null)?'disabled':''}>Next</button></div>`}
+ if(v==='exp')app.innerHTML=`${step(6)}<h2>Last question</h2><div class="card"><p>Have you ever owned stocks or equity funds with your own money?</p><div class="opts">
+  ${['Yes','No'].map((o,j)=>`<button data-v="${j}" class="${S.exp===j?'sel':''}">${o}</button>`).join('')}</div></div>
+  <div class="btns"><button class="pri" id="nx" ${S.exp===null?'disabled':''}>See my result</button></div>`;
+ if(v==='res')return renderResult();
+ bind(v)}
+
+function bind(v){const nx=document.getElementById('nx'),bk=document.getElementById('bk');
+ if(bk)bk.onclick=()=>go(-1);
+ if(nx)nx.onclick=()=>{if(v==='intro'){const c=document.getElementById('cn').value.trim();if(!c){document.getElementById('cn').focus();return}S.code=c;if(!S.t0)S.t0=Date.now()}go(1)};
+ app.querySelectorAll('.scale button,.opts button').forEach(b=>b.onclick=()=>{const val=+b.dataset.v;
+  if(v==='self')S.self=val;if(v==='dom')S.dom=val;if(v==='exp')S.exp=val;if(v==='ind')S.ind[+b.dataset.q]=val;render()})}
+
+function pf(y){const dr=R+y*PREM-y*y*SIG*SIG/2,sd=y*SIG*Math.sqrt(T);const med=W0*Math.exp(dr*T);
+ return{y,med,lo:med*Math.exp(-1.645*sd),hi:med*Math.exp(1.645*sd),pb:sd>0?N(-dr*T/sd):(dr<0?1:0)}}
+function drawRows(){const P=[...Array(11)].map((_,k)=>pf(k/10));const xmin=Math.log(1.5e6),xmax=Math.log(1.2e8);
+ const X=v=>(Math.log(v)-xmin)/(xmax-xmin)*100;
+ document.getElementById('rows').innerHTML=P.map(p=>`<button class="row ${S.y===p.y?'sel':''}" data-y="${p.y}" aria-label="${Math.round(p.y*100)}% equities"><span class="lab">${Math.round(p.y*100)}%</span>
+  <span class="track"><span class="start" style="left:${X(W0)}%"></span><span class="rng" style="left:${X(p.lo)}%;width:${Math.max(0.6,X(p.hi)-X(p.lo))}%"></span><span class="med" style="left:calc(${X(p.med)}% - 1px)"></span></span></button>`).join('');
+ document.getElementById('ax').innerHTML=[2e6,4e6,1e7,2e7,5e7,1e8].map(v=>`<span style="left:${X(v)}%">${mill(v).replace('NOK ','')}</span>`).join('');
+ app.querySelectorAll('.row').forEach(b=>b.onclick=()=>{S.y=+b.dataset.y;drawRows();document.getElementById('nx').disabled=false});
+ if(S.y!==null){const p=pf(S.y);document.getElementById('det').innerHTML=`<b>${Math.round(p.y*100)}% equities.</b> Typical outcome ${mill(p.med)}. Bad case ${mill(p.lo)}, good case ${mill(p.hi)}. Chance of ending below NOK 4 million: ${pct(p.pb)}.`}}
+
+function summary(){const q=S.q.map(est);const pts=q.map(e=>e.pt).sort((a,b)=>a-b);const g=pts[1];
+ const m=S.small,gs=m.lo>=SMALL.length?Infinity:gammaOf(Math.sqrt((m.lo?SMALL[m.lo-1]:40000)*SMALL[m.lo])/W0,0.01);
+ const gdb=S.y>0?PREM/(S.y*SIG*SIG):Infinity;const ys=Math.min(1,PREM/(g*SIG*SIG));
+ return{q,g,gs,gdb,ys,ind:S.ind.reduce((a,b)=>a+b+1,0)}}
+function codeOf(){const q=S.q.map(est).map(e=>[+e.lo.toFixed(3),+e.hi.toFixed(3),e.cl?1:0,e.ch?1:0]);
+ const o={v:1,c:S.code,g:GROUP,s:S.self,q,sm:S.small.lo,d:S.dom,y:S.y,i:S.ind,x:S.exp,t:secs()};
+ return'RA1:'+btoa(unescape(encodeURIComponent(JSON.stringify(o))))}
+const secs=()=>S.t0?Math.round((Date.now()-S.t0)/1000):'';
+const r3=x=>isFinite(x)?+x.toFixed(3):'';
+function payload(){const r=summary(),q=r.q,m=S.small;
+ return{v:1,group:GROUP,name:S.code.slice(0,40),seconds:secs(),self:S.self,
+  g10_lo:r3(q[0].lo),g10_hi:r3(q[0].hi),g20_lo:r3(q[1].lo),g20_hi:r3(q[1].hi),g400_lo:r3(q[2].lo),g400_hi:r3(q[2].hi),
+  gamma:r3(r.g),gamma_portfolio:r3(r.gdb),share_chosen:S.y,share_optimal:r3(r.ys),
+  small_accept_nok:m.lo<SMALL.length?SMALL[m.lo]:'none',gamma_small:r3(r.gs),dominance_fail:S.dom,
+  ind1:S.ind[0]+1,ind2:S.ind[1]+1,ind3:S.ind[2]+1,ind4:S.ind[3]+1,industry_score:r.ind,owns_stocks:S.exp===0?1:0,code:codeOf()}}
+function showStatus(){const el=document.getElementById('st');if(!el)return;
+ const msg={sending:'Saving your answers…',ok:'Your answers have been saved. Thank you for taking part.',fail:'We could not save your answers. Check your internet connection and try again.',none:'Saving is not set up on this copy of the page.'}[S.sent]||'';
+ el.innerHTML=`<p>${msg}</p>${S.sent==='fail'?'<div class="btns"><button class="pri" id="rt">Try again</button></div>':''}`;
+ const rt=document.getElementById('rt');if(rt)rt.onclick=submit;
+ document.getElementById('man').classList.toggle('hide',!(S.sent==='fail'||S.sent==='none'))}
+function submit(){if(!ENDPOINT){S.sent='none';showStatus();return}
+ S.sent='sending';showStatus();const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),20000);
+ fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload()),signal:ac.signal})
+  .then(r=>r.json()).then(j=>{S.sent=j&&j.ok?'ok':'fail'}).catch(()=>{S.sent='fail'}).finally(()=>{clearTimeout(tm);showStatus()})}
+
+function renderResult(){const r=summary(),c=codeOf();
+ const rng=e=>`${e.cl?'below ':''}${f2(e.lo)}–${f2(e.hi)}${e.ch?' or higher':''}`;
+ app.innerHTML=`<h1>Your result, ${esc(S.code)}</h1>
+ <div class="card"><p class="mute">Your relative risk aversion from the coin flips</p><div class="result">γ ≈ ${f2(r.g)}</div>
+ <p style="margin-top:12px">Each coin flip narrows down your risk aversion to a range. Your estimate is the middle of the three.</p>
+ <table><tr><th>Coin flip</th><th class="n">Range for γ</th></tr>
+ ${['Lose 10% or win ?','Lose 20% or win ?','Win 400% or lose ?'].map((t,k)=>`<tr><td>${t}</td><td class="n">${rng(r.q[k])}</td></tr>`).join('')}</table></div>
+ <div class="card"><h2>What it means for your portfolio</h2>
+ <p>With the assumptions from the portfolio question, a risk aversion of ${f2(r.g)} gives an optimal equity share of <b>${pct(r.ys)}</b>${r.ys>=1?' (capped at 100%, no borrowing)':''}.</p>
+ <p>In the portfolio question you chose <b>${pct(S.y)}</b> equities, which corresponds to γ ≈ ${isFinite(r.gdb)?f2(r.gdb):'very high'}.</p>
+ <p>In the small coin flip, your answers correspond to ${isFinite(r.gs)?'γ ≈ '+f2(r.gs):'γ above 100'}. This number is often much higher than the others.</p></div>
+ <div class="card"><div id="st"></div>
+ <div id="man" class="hide"><p class="mute">If you were asked to hand in your answers, you can copy this code instead. It contains your answers and the name you chose.</p>
+ <code class="rc" id="rc">${esc(c)}</code><div class="btns" style="margin-top:12px"><button id="cp">Copy code</button><span id="cpm" class="mute" style="align-self:center"></span></div></div></div>`;
+ if(S.sent==='idle')submit();else showStatus();
+ document.getElementById('cp').onclick=async()=>{const m=document.getElementById('cpm');try{await navigator.clipboard.writeText(c);m.textContent='Copied.'}catch(e){const s=getSelection(),rg=document.createRange();rg.selectNodeContents(document.getElementById('rc'));s.removeAllRanges();s.addRange(rg);m.textContent='Selected: press Ctrl+C or Cmd+C.'}}}
+
+/* ---------- instructor view ---------- */
+function decode(line){const m=line.match(/RA1:[A-Za-z0-9+/=]+/);if(!m)return null;try{const o=JSON.parse(decodeURIComponent(escape(atob(m[0].slice(4)))));if(o.v!==1)return null;
+ const q=o.q.map(a=>({lo:a[0],hi:a[1],pt:Math.sqrt(a[0]*a[1]),cl:!!a[2],ch:!!a[3]}));const g=q.map(e=>e.pt).sort((a,b)=>a-b)[1];
+ const gs=o.sm>=SMALL.length?Infinity:gammaOf(Math.sqrt((o.sm?SMALL[o.sm-1]:40000)*SMALL[o.sm])/W0,0.01);
+ return{c:String(o.c),grp:String(o.g||''),t:o.t,s:o.s,g,q,gs,gdb:o.y>0?PREM/(o.y*SIG*SIG):Infinity,y:o.y,ys:Math.min(1,PREM/(g*SIG*SIG)),ind:o.i.reduce((a,b)=>a+b+1,0),dom:o.d,x:o.x}}catch(e){return null}}
+const qs=(a,p)=>{const s=[...a].sort((x,y)=>x-y),i=(s.length-1)*p,lo=Math.floor(i);return s[lo]+(s[Math.ceil(i)]-s[lo])*(i-lo)};
+function renderInstructor(){app.innerHTML=`<h1>Instructor view</h1><p>Copy the <b>code</b> column from the response spreadsheet (or whole rows) and paste it here. Nothing is stored or sent anywhere.</p>
+ <textarea id="in" placeholder="RA1:..."></textarea>
+ <label for="gf" style="display:block;margin-top:12px">Only show group (leave blank for all responses)</label><input id="gf" type="text" placeholder="e.g. econ4510" style="margin:6px 0">
+ <div class="btns" style="margin:12px 0"><button class="pri" id="an">Analyse</button><a href="#" id="back" style="align-self:center;color:var(--ink)">Back to the survey</a></div><div id="out"></div>`;
+ document.getElementById('back').onclick=e=>{e.preventDefault();location.hash='';render()};
+ document.getElementById('an').onclick=()=>{const gf=document.getElementById('gf').value.trim().toLowerCase();const rs=document.getElementById('in').value.split(/\n/).map(decode).filter(r=>r&&(!gf||r.grp.toLowerCase()===gf));const out=document.getElementById('out');
+  if(!rs.length){out.innerHTML='<p class="mute">No valid codes found.</p>';return}
+  const G=rs.map(r=>r.g),bins=[[0,1,'< 1'],[1,2,'1–2'],[2,3,'2–3'],[3,5,'3–5'],[5,8,'5–8'],[8,1e9,'8 +']];const cnt=bins.map(b=>G.filter(g=>g>=b[0]&&g<b[1]).length),mx=Math.max(...cnt);
+  const csv=['name,group,self,gamma,gamma_lo10,gamma_lo20,gamma_up400,gamma_portfolio,equity_share_chosen,equity_share_optimal,gamma_small,industry_score,dominance_fail,owns_stocks'].concat(rs.map(r=>[JSON.stringify(r.c),JSON.stringify(r.grp),r.s,r.g.toFixed(2),...r.q.map(e=>e.pt.toFixed(2)),isFinite(r.gdb)?r.gdb.toFixed(2):'',r.y,r.ys.toFixed(2),isFinite(r.gs)?r.gs.toFixed(1):'',r.ind,r.dom,r.x===0?1:0].join(','))).join('\n');
+  out.innerHTML=`<div class="card"><h2>${rs.length} responses</h2><p>Median γ ${f2(qs(G,.5))} (quartiles ${f2(qs(G,.25))} and ${f2(qs(G,.75))}). Median optimal equity share ${pct(qs(rs.map(r=>r.ys),.5))}; median chosen share ${pct(qs(rs.map(r=>r.y),.5))}. Failed the dominance check: ${rs.filter(r=>r.dom===1).length}.</p>
+  <div class="bars">${bins.map((b,k)=>`<div class="bar"><span>γ ${b[2]}</span><i style="width:${mx?cnt[k]/mx*100:0}%"></i><span>${cnt[k]}</span></div>`).join('')}</div></div>
+  <div class="card"><h2>Coin flips against the portfolio choice</h2><div class="fig"><svg id="sc"></svg></div><p class="mute">Each dot is one respondent: γ from the coin flips (horizontal) and the equity share chosen in the portfolio question (vertical). The curve shows the share each γ implies.</p></div>
+  <div class="card scroll"><table><tr><th>Name</th><th>Group</th><th class="n">Self 0–10</th><th class="n">γ flips</th><th class="n">γ portfolio</th><th class="n">γ small</th><th class="n">Industry 4–16</th></tr>
+  ${rs.map(r=>`<tr><td>${esc(r.c)}${r.dom===1?' *':''}</td><td>${esc(r.grp)}</td><td class="n">${r.s}</td><td class="n">${f2(r.g)}</td><td class="n">${isFinite(r.gdb)?f2(r.gdb):'> 16'}</td><td class="n">${isFinite(r.gs)?f2(r.gs):'> 100'}</td><td class="n">${r.ind}</td></tr>`).join('')}</table><p class="mute">* failed the dominance check.</p></div>
+  <div class="card"><h2>Export</h2><p>Copy into a spreadsheet.</p><textarea readonly>${esc(csv)}</textarea></div>`;
+  const s=document.getElementById('sc');const draw=()=>{const w=s.clientWidth,h=s.clientHeight,p=36,lx=v=>p+(Math.log(Math.min(Math.max(v,0.3),20))-Math.log(0.3))/(Math.log(20)-Math.log(0.3))*(w-p-10),ly=v=>h-p-v*(h-p-10);
+   let curve='';for(let k=0;k<=60;k++){const g=0.3*Math.pow(20/0.3,k/60);curve+=(k?'L':'M')+lx(g).toFixed(1)+' '+ly(Math.min(1,PREM/(g*SIG*SIG))).toFixed(1)}
+   s.innerHTML=`<line x1="${p}" y1="${h-p}" x2="${w-10}" y2="${h-p}" stroke="currentColor" opacity=".3"/><line x1="${p}" y1="10" x2="${p}" y2="${h-p}" stroke="currentColor" opacity=".3"/>
+   <path d="${curve}" fill="none" stroke="var(--claret)" stroke-width="2"/>${rs.map(r=>`<circle cx="${lx(r.g).toFixed(1)}" cy="${ly(r.y).toFixed(1)}" r="5" fill="var(--teal)" opacity=".75"/>`).join('')}
+   ${[0.5,1,2,5,10].map(g=>`<text x="${lx(g)}" y="${h-p+18}" font-size="12" text-anchor="middle" fill="currentColor">${g}</text>`).join('')}
+   ${[0,0.5,1].map(v=>`<text x="${p-6}" y="${ly(v)+4}" font-size="12" text-anchor="end" fill="currentColor">${v*100}%</text>`).join('')}`};const ro=new ResizeObserver(draw);ro.observe(s)}}
+
+window.addEventListener('hashchange',render);render();
+}
+</script>
+</body>
+</html>
